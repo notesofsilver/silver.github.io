@@ -1,0 +1,184 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Golang 程序产生coredump | 程序员的万事屋</title><meta name="keywords" content="编程 分享"><meta name="author" content="银"><meta name="copyright" content="银"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="开启系统的core dump 功能 1.查看coredump功能状态 1#ulimit -a  从图中可以看出core file size &#x3D; 0, core dump 功能是关闭的。必须为core file size 设置合理的值 2.开启core dump 功能 1# ulimit -c unlimited 设置core file size &#x3D; unlimited，core dump file">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Golang 程序产生coredump">
+<meta property="og:url" content="https://notesofsilver.github.io/silver.github.io/2021/06/24/golang_coredump/index.html">
+<meta property="og:site_name" content="程序员的万事屋">
+<meta property="og:description" content="开启系统的core dump 功能 1.查看coredump功能状态 1#ulimit -a  从图中可以看出core file size &#x3D; 0, core dump 功能是关闭的。必须为core file size 设置合理的值 2.开启core dump 功能 1# ulimit -c unlimited 设置core file size &#x3D; unlimited，core dump file">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://notesofsilver.github.io/silver.github.io/img/golang-coredump.png">
+<meta property="article:published_time" content="2021-06-24T08:38:12.903Z">
+<meta property="article:modified_time" content="2021-06-24T08:38:12.902Z">
+<meta property="article:author" content="银">
+<meta property="article:tag" content="编程 分享">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://notesofsilver.github.io/silver.github.io/img/golang-coredump.png"><link rel="shortcut icon" href="/silver.github.io/img/favicon.png"><link rel="canonical" href="https://notesofsilver.github.io/silver.github.io/2021/06/24/golang_coredump/"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/silver.github.io/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><script>const GLOBAL_CONFIG = { 
+  root: '/silver.github.io/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: undefined,
+  source: {
+    jQuery: 'https://cdn.jsdelivr.net/npm/jquery@latest/dist/jquery.min.js',
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/justifiedGallery/dist/js/jquery.justifiedGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/justifiedGallery/dist/css/justifiedGallery.min.css'
+    },
+    fancybox: {
+      js: 'https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.css'
+    }
+  },
+  isPhotoFigcaption: false,
+  islazyload: false,
+  isanchor: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Golang 程序产生coredump',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2021-06-24 16:38:12'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+    win.saveToLocal = {
+      set: function setWithExpiry(key, value, ttl) {
+        if (ttl === 0) return
+        const now = new Date()
+        const expiryDay = ttl * 86400000
+        const item = {
+          value: value,
+          expiry: now.getTime() + expiryDay,
+        }
+        localStorage.setItem(key, JSON.stringify(item))
+      },
+
+      get: function getWithExpiry(key) {
+        const itemStr = localStorage.getItem(key)
+
+        if (!itemStr) {
+          return undefined
+        }
+        const item = JSON.parse(itemStr)
+        const now = new Date()
+
+        if (now.getTime() > item.expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return item.value
+      }
+    }
+  
+    win.getScript = url => new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = url
+      script.async = true
+      script.onerror = reject
+      script.onload = script.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        script.onload = script.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(script)
+    })
+  
+      win.activateDarkMode = function () {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = function () {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          if (t === 'dark') activateDarkMode()
+          else if (t === 'light') activateLightMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    })(window)</script><meta name="generator" content="Hexo 5.4.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="author-avatar"><img class="avatar-img" src="https://i.loli.net/2021/02/24/5O1day2nriDzjSu.png" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data"><div class="data-item is-center"><div class="data-item-link"><a href="/silver.github.io/archives/"><div class="headline">文章</div><div class="length-num">3</div></a></div></div></div><hr/></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('/silver.github.io/img/golang-coredump.png')"><nav id="nav"><span id="blog_name"><a id="site-name" href="/silver.github.io/">程序员的万事屋</a></span><div id="menus"><div id="toggle-menu"><a class="site-page"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">Golang 程序产生coredump</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2021-06-24T08:38:12.903Z" title="发表于 2021-06-24 16:38:12">2021-06-24</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2021-06-24T08:38:12.902Z" title="更新于 2021-06-24 16:38:12">2021-06-24</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="Golang 程序产生coredump"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><h2 id="开启系统的core-dump-功能">开启系统的core dump 功能</h2>
+<p><strong><font size=3>1.查看coredump功能状态</font></strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">#ulimit -a</span><br></pre></td></tr></table></figure>
+<img src="/silver.github.io/img/ulimit.png" alt="ulimit" style="zoom:100%;"/>
+<p><font face="宋体" size=3>从图中可以看出core file size = 0, core dump 功能是关闭的。必须为core file size 设置合理的值</font></p>
+<p><strong><font size=3>2.开启core dump 功能</font></strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"># ulimit -c unlimited</span><br></pre></td></tr></table></figure>
+<p><font face="宋体" size=3>设置core file size = unlimited，core dump file 的文件的大小无限制。也可以根据自己的需要把core file 设置为特定的大小如：</font></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">#ulimit -c 1024 </span><br></pre></td></tr></table></figure>
+<p><font face="宋体" size=3>需要注意的是core file size 的单位是block， block = 512字节。因通过ulimit 设置core file size 只对当前的终端起作用，当你关闭终端或者重启系统设置会失效。为了避免每次都设置的麻烦，可以在~/.profile 最后添加:</font><br></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"># echo &quot;ulimit -c unlimited&quot; &gt;&gt; ~/.profile</span><br></pre></td></tr></table></figure>
+<p><strong><font size=3>3.设置core dump 文件的位置</font></strong></p>
+<p><font face='宋体' size=3>core dump file 的默认生成的位置是程序当前运行的目录，为了便于查找必须指定一个统一的保存位置。在/etc/sysctl.conf文件中添加</font><br></p>
+<pre><code>  *kernel.core_pattern=/var/core/core%t%p_%e*
+
+  %t: 生成的文件的时间戳
+
+  %p:发生断言的进程的id
+
+  %e:发生断言的的代码文件
+</code></pre>
+<p><font face='宋体' size=3>然后执行:</font></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"># sysctl -p  /etc/sysctl.conf</span><br></pre></td></tr></table></figure>
+<h2 id="Golang-core-dump功能设置">Golang core dump功能设置</h2>
+<p><strong><font size=3>1.设置Go环境变量</font></strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"># export GOTRACEBACK=crash </span><br></pre></td></tr></table></figure>
+<p><font face='宋体' size=3>Golang的程序生成core dump file 文件还需要借助一个环境变量：GOTRACEBACK。GOTRACEBACK变量控制着程序出现断言时输出怎样的信息，具体设置如下：</font><br></p>
+<pre><code>        环境变量                描述
+
+ GOTRACEBACK=none        只输出panic异常信息
+
+ GOTRACEBACK=single      只输出被认为引发panic异常的那个goroutine的相关信息
+
+ GOTRACEBACK=all         输出所有goroutines的相关信息，除去与go runtime相关的stack frames 
+
+ GOTRACEBACK=system      输出所有goroutines的相关信息，包括与go runtime相关的stack frames,从而得知哪些goroutine是go runtime启动运行的
+
+ GOTRACEBACK=crash       与system的唯一区别是crash会生成coredump文件
+</code></pre>
+<p><font face='宋体' size=3>需要注意的是和ulmit 命令一样，在关闭终端和重启系统后，设置的GOTRACEBACK变量会消失，所以要将’export GOTRACEBACK=crash’ 加入到 .profile文件中</font><br></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"># echo &quot;export GOTRACEBACK=crash &quot; &gt;&gt; ~/.profile</span><br></pre></td></tr></table></figure>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">文章作者: </span><span class="post-copyright-info"><a href="mailto:undefined">银</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">文章链接: </span><span class="post-copyright-info"><a href="https://notesofsilver.github.io/silver.github.io/2021/06/24/golang_coredump/">https://notesofsilver.github.io/silver.github.io/2021/06/24/golang_coredump/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="https://notesofsilver.github.io/silver.github.io" target="_blank">程序员的万事屋</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"></div><div class="post_share"><div class="social-share" data-image="/silver.github.io/img/golang-coredump.png" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/social-share.js/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/social-share.js/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><div class="next-post pull-full"><a href="/silver.github.io/2021/06/22/Lvm01/"><img class="next-cover" src="/silver.github.io/img/LVM.png" onerror="onerror=null;src='/silver.github.io/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">Linux LVM 基本使用</div></div></a></div></nav></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="card-info-avatar is-center"><img class="avatar-img" src="https://i.loli.net/2021/02/24/5O1day2nriDzjSu.png" onerror="this.onerror=null;this.src='/silver.github.io/img/friend_404.gif'" alt="avatar"/><div class="author-info__name">银</div><div class="author-info__description">一个专注于问题的地方</div></div><div class="card-info-data"><div class="card-info-data-item is-center"><a href="/silver.github.io/archives/"><div class="headline">文章</div><div class="length-num">3</div></a></div></div><a class="button--animated" id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/xxxxxx"><i class="fab fa-github"></i><span>Follow Me</span></a></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn card-announcement-animation"></i><span>公告</span></div><div class="announcement_content">分享知识，解决问题</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%BC%80%E5%90%AF%E7%B3%BB%E7%BB%9F%E7%9A%84core-dump-%E5%8A%9F%E8%83%BD"><span class="toc-number">1.</span> <span class="toc-text">开启系统的core dump 功能</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Golang-core-dump%E5%8A%9F%E8%83%BD%E8%AE%BE%E7%BD%AE"><span class="toc-number">2.</span> <span class="toc-text">Golang core dump功能设置</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/silver.github.io/2021/06/24/golang_coredump/" title="Golang 程序产生coredump"><img src="/silver.github.io/img/golang-coredump.png" onerror="this.onerror=null;this.src='/silver.github.io/img/404.jpg'" alt="Golang 程序产生coredump"/></a><div class="content"><a class="title" href="/silver.github.io/2021/06/24/golang_coredump/" title="Golang 程序产生coredump">Golang 程序产生coredump</a><time datetime="2021-06-24T08:38:12.903Z" title="发表于 2021-06-24 16:38:12">2021-06-24</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/silver.github.io/2021/06/22/Lvm01/" title="Linux LVM 基本使用"><img src="/silver.github.io/img/LVM.png" onerror="this.onerror=null;this.src='/silver.github.io/img/404.jpg'" alt="Linux LVM 基本使用"/></a><div class="content"><a class="title" href="/silver.github.io/2021/06/22/Lvm01/" title="Linux LVM 基本使用">Linux LVM 基本使用</a><time datetime="2021-06-22T09:20:18.930Z" title="发表于 2021-06-22 17:20:18">2021-06-22</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/silver.github.io/2021/06/17/UbuntuClean/" title="Ubuntu 环境清理"><img src="/silver.github.io/img/UbuntuClean.jpg" onerror="this.onerror=null;this.src='/silver.github.io/img/404.jpg'" alt="Ubuntu 环境清理"/></a><div class="content"><a class="title" href="/silver.github.io/2021/06/17/UbuntuClean/" title="Ubuntu 环境清理">Ubuntu 环境清理</a><time datetime="2021-06-17T15:27:39.348Z" title="发表于 2021-06-17 23:27:39">2021-06-17</time></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"><div class="copyright">&copy;2020 - 2021 By 银</div><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/silver.github.io/js/utils.js"></script><script src="/silver.github.io/js/main.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></body></html>
